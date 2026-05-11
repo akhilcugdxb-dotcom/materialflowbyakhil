@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MaterialFlow">
+<meta name="theme-color" content="#4F8EF7">
+<title>MaterialFlow</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0F1117;--s1:#1A1D27;--s2:#22263A;--s3:#2A2E42;
+  --accent:#4F8EF7;--accent2:#7C5CFC;
+  --ok:#2ECC8A;--warn:#F0A429;--danger:#E24B4A;--pink:#FF6B9D;
+  --t1:#F0F2FF;--t2:#9BA3C5;--t3:#5A6285;
+  --bdr:rgba(255,255,255,0.07);
+  --r:14px;--rsm:9px;
+  --nav-h:62px;--hdr-h:110px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--t1)}
+#app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;position:relative}
+
+/* HEADER */
+.hdr{background:var(--bg);padding:12px 16px 0;position:relative;z-index:10;flex-shrink:0}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.logo{font-size:21px;font-weight:800;letter-spacing:-0.5px}
+.logo span{color:var(--accent)}
+.offline-pill{display:flex;align-items:center;gap:5px;font-size:11px;background:rgba(46,204,138,.12);color:var(--ok);border-radius:20px;padding:4px 10px;border:1px solid rgba(46,204,138,.2)}
+.offline-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.tabs{display:flex;gap:3px;background:var(--s1);border-radius:11px;padding:4px}
+.tab{flex:1;padding:7px 4px;font-size:12px;font-weight:600;text-align:center;border-radius:8px;cursor:pointer;border:none;background:transparent;color:var(--t3);transition:all .2s}
+.tab.on{background:var(--s3);color:var(--t1)}
+.hdr-gap{height:12px}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 16px;padding-bottom:calc(var(--nav-h) + 16px);-webkit-overflow-scrolling:touch}
+
+/* BOTTOM NAV */
+.bnav{position:absolute;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--s1);border-top:1px solid var(--bdr);display:flex;z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+.nb{flex:1;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:500;color:var(--t3);transition:color .2s;padding:8px 0}
+.nb.on{color:var(--accent)}
+.nb svg{width:22px;height:22px;stroke-width:1.7}
+
+/* FAB */
+.fab{position:absolute;bottom:calc(var(--nav-h) + 14px);right:18px;width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 22px rgba(79,142,247,.45);z-index:11;transition:transform .15s,box-shadow .15s}
+.fab:active{transform:scale(.92);box-shadow:0 2px 10px rgba(79,142,247,.3)}
+
+/* CARDS */
+.card{background:var(--s1);border-radius:var(--r);border:1px solid var(--bdr);margin-bottom:10px;overflow:hidden}
+.card-hdr{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.pico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.pinfo{flex:1;min-width:0}
+.pname{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmeta{font-size:11px;color:var(--t2);margin-top:2px}
+.pright{text-align:right;flex-shrink:0}
+.chips{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:3px}
+.chip{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700}
+.chip-w{background:rgba(240,164,41,.15);color:var(--warn)}
+.chip-b{background:rgba(79,142,247,.15);color:var(--accent)}
+.chip-g{background:rgba(46,204,138,.13);color:var(--ok)}
+.pct{font-size:11px;color:var(--t3)}
+.pbar{height:3px;background:var(--s2)}
+.pbar-fill{height:100%;border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.cbody{display:none;padding:0 14px 12px;animation:slidedown .2s ease}
+.cbody.open{display:block}
+@keyframes slidedown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* MATERIAL ROWS */
+.mrow{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid var(--bdr)}
+.mstat{width:24px;height:24px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;border:1.5px solid;transition:all .2s;font-weight:700}
+.mstat.pending{background:rgba(240,164,41,.1);border-color:var(--warn);color:var(--warn)}
+.mstat.delivered{background:rgba(46,204,138,.13);border-color:var(--ok);color:var(--ok)}
+.mstat.requested{background:rgba(79,142,247,.13);border-color:var(--accent);color:var(--accent)}
+.minfo{flex:1;min-width:0}
+.mname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mdetail{font-size:11px;color:var(--t2);margin-top:1px}
+.mqty{font-size:12px;font-weight:600;color:var(--t2);flex-shrink:0;max-width:70px;text-align:right}
+.mbtns{display:flex;gap:5px;flex-shrink:0}
+.ibtn{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s}
+.ibtn:active{transform:scale(.9)}
+.ibtn-r{background:rgba(79,142,247,.15);color:var(--accent)}
+.ibtn-d{background:rgba(46,204,138,.13);color:var(--ok)}
+.ibtn-x{background:rgba(226,75,74,.13);color:var(--danger)}
+.add-mat-btn{width:100%;margin-top:10px;padding:9px;border-radius:9px;background:var(--s2);border:1px dashed rgba(255,255,255,.1);color:var(--t2);font-size:12px;cursor:pointer;transition:all .2s}
+.add-mat-btn:active{background:var(--s3)}
+
+/* SECTION LABEL */
+.slbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px}
+
+/* SEARCH */
+.search{background:var(--s1);border:1px solid var(--bdr);border-radius:11px;padding:10px 14px;color:var(--t1);font-size:14px;outline:none;width:100%;margin-bottom:12px}
+.search::placeholder{color:var(--t3)}
+.search:focus{border-color:var(--accent)}
+
+/* FILTER BADGES */
+.fbadges{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fbadge{font-size:12px;padding:5px 13px;border-radius:20px;border:1px solid var(--bdr);background:transparent;color:var(--t2);cursor:pointer;transition:all .15s;font-weight:500}
+.fbadge.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* DASHBOARD */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.scard{background:var(--s1);border-radius:var(--r);border:1px solid var(--bdr);padding:14px}
+.sval{font-size:28px;font-weight:800;line-height:1}
+.slbl2{font-size:12px;color:var(--t2);margin-top:4px}
+.bigbar{background:var(--s2);border-radius:5px;height:8px;overflow:hidden;margin:6px 0}
+.bigbar-fill{height:100%;border-radius:5px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.actrow{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--bdr)}
+.actdot{width:10px;height:10px;border-radius:50%;margin-top:3px;flex-shrink:0}
+.acttxt{font-size:13px;line-height:1.4}
+.acttime{font-size:11px;color:var(--t3);margin-top:2px}
+
+/* MODAL */
+.moverlay{position:absolute;inset:0;background:rgba(0,0,0,.75);z-index:50;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
+.moverlay.open{opacity:1;pointer-events:all}
+.mdrawer{background:var(--s1);border-radius:20px 20px 0 0;width:100%;padding:16px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.2,.64,1);max-height:90vh;overflow-y:auto}
+.moverlay.open .mdrawer{transform:translateY(0)}
+.mhandle{width:36px;height:4px;background:var(--s3);border-radius:2px;margin:0 auto 16px}
+.mtitle{font-size:18px;font-weight:800;margin-bottom:16px}
+.fg{margin-bottom:13px}
+.flbl{font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:600}
+.finput{width:100%;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--rsm);padding:11px 13px;color:var(--t1);font-size:14px;outline:none;-webkit-appearance:none}
+.finput:focus{border-color:var(--accent)}
+.finput option{background:var(--s2)}
+.btn-ok{width:100%;padding:14px;border-radius:var(--rsm);background:var(--accent);color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;margin-top:6px;transition:opacity .2s}
+.btn-ok:active{opacity:.8}
+.btn-danger{background:var(--danger)}
+
+/* TOAST */
+.toast{position:absolute;bottom:calc(var(--nav-h) + 72px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--s3);color:var(--t1);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:500;white-space:nowrap;opacity:0;transition:all .3s;z-index:99;pointer-events:none;border:1px solid var(--bdr)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--t3)}
+.empty-ico{font-size:44px;margin-bottom:12px}
+.empty-txt{font-size:14px}
+
+/* PROJ SETTINGS */
+.proj-settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--bdr)}
+.psr-name{font-size:13px;font-weight:600}
+.psr-meta{font-size:11px;color:var(--t2)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:0}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hdr">
+    <div class="hdr-top">
+      <div class="logo">Material<span>Flow</span></div>
+      <div class="offline-pill"><div class="offline-dot"></div>Offline Ready</div>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" onclick="go('projects')">Projects</button>
+      <button class="tab" onclick="go('requests')">Requests</button>
+      <button class="tab" onclick="go('dashboard')">Dashboard</button>
+    </div>
+    <div class="hdr-gap"></div>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <button class="fab" id="fab" onclick="fabClick()">+</button>
+
+  <nav class="bnav">
+    <button class="nb on" onclick="go('projects')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      Projects
+    </button>
+    <button class="nb" onclick="go('requests')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Requests
+    </button>
+    <button class="nb" onclick="go('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="12" width="5" height="9"/><rect x="9.5" y="7" width="5" height="14"/><rect x="16" y="3" width="5" height="18"/></svg>
+      Dashboard
+    </button>
+    <button class="nb" onclick="go('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+  </nav>
+
+  <div class="moverlay" id="overlay" onclick="closeBg(event)">
+    <div class="mdrawer" id="drawer">
+      <div class="mhandle"></div>
+      <div id="drawerBody"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────
+let DB = {
+  projects: [],
+  materials: [],
+  log: []
+};
+let view = 'projects';
+let openCards = {};
+let filterStatus = 'all';
+let searchQ = '';
+const PROJ_ICONS = ['🏗️','🏡','🏢','🏭','🏬','🏛️','🏨','🏪','🏫','🏦'];
+const PROJ_COLORS = ['#4F8EF7','#7C5CFC','#2ECC8A','#F0A429','#E24B4A','#FF6B9D','#22D3EE','#F97316'];
+
+// ─── LOCALSTORAGE PERSISTENCE ─────────────────────────────────
+function save() {
+  try { localStorage.setItem('mf_db', JSON.stringify(DB)); } catch(e){}
+}
+function load() {
+  try {
+    const d = localStorage.getItem('mf_db');
+    if(d) { DB = JSON.parse(d); return; }
+  } catch(e){}
+  // Seed demo data
+  DB.projects = [
+    { id: 1, name: 'Tower Block A', icon: '🏗️', color: '#4F8EF7', client: 'AlDar Properties', site: 'Dubai Marina', created: Date.now() },
+    { id: 2, name: 'Villa Complex', icon: '🏡', color: '#7C5CFC', client: 'DAMAC Holdings', site: 'Arabian Ranches', created: Date.now() },
+    { id: 3, name: 'Office Fitout', icon: '🏢', color: '#2ECC8A', client: 'Emaar Dev.', site: 'Downtown Dubai', created: Date.now() },
+  ];
+  DB.materials = [
+    { id:1, projId:1, name:'Ready Mix Concrete C35', qty:'120 m³', spec:'C35 grade', status:'delivered', date:'2025-05-08', note:'' },
+    { id:2, projId:1, name:'Steel Rebar 16mm', qty:'8.5 tonnes', spec:'Grade 60', status:'pending', date:'2025-05-10', note:'' },
+    { id:3, projId:1, name:'Scaffolding Pipes', qty:'200 pcs', spec:'6m length', status:'requested', date:'2025-05-09', note:'' },
+    { id:4, projId:1, name:'Waterproofing Membrane', qty:'500 m²', spec:'Type 2', status:'pending', date:'2025-05-11', note:'' },
+    { id:5, projId:2, name:'AAC Blocks 200mm', qty:'2400 units', spec:'200x200x600', status:'delivered', date:'2025-05-07', note:'' },
+    { id:6, projId:2, name:'Window Frames UPVC', qty:'42 units', spec:'1.2x1.5m', status:'requested', date:'2025-05-10', note:'' },
+    { id:7, projId:2, name:'Ceramic Tiles 60x60', qty:'800 m²', spec:'Beige matte', status:'pending', date:'2025-05-11', note:'' },
+    { id:8, projId:3, name:'Gypsum Board 12mm', qty:'1200 sheets', spec:'Standard', status:'delivered', date:'2025-05-06', note:'' },
+    { id:9, projId:3, name:'LED Ceiling Panels', qty:'180 units', spec:'60x60cm', status:'pending', date:'2025-05-11', note:'' },
+    { id:10, projId:3, name:'Raised Floor System', qty:'450 m²', spec:'Steel panel', status:'requested', date:'2025-05-08', note:'' },
+  ];
+  DB.log = [
+    { text:'Concrete C35 delivered to Tower Block A', time:'2 hours ago', color:'#2ECC8A' },
+    { text:'Window Frames requested for Villa Complex', time:'5 hours ago', color:'#4F8EF7' },
+    { text:'Raised Floor System requested for Office Fitout', time:'Yesterday', color:'#4F8EF7' },
+    { text:'AAC Blocks delivered to Villa Complex', time:'Yesterday', color:'#2ECC8A' },
+    { text:'Gypsum Board delivered to Office Fitout', time:'2 days ago', color:'#2ECC8A' },
+  ];
+  save();
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────
+function go(v) {
+  view = v;
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('on', ['projects','requests','dashboard'][i] === v));
+  document.querySelectorAll('.nb').forEach((b,i) => b.classList.toggle('on', ['projects','requests','dashboard','settings'][i] === v));
+  if(v === 'settings') { openSettings(); return; }
+  render();
+}
+
+// ─── RENDER ───────────────────────────────────────────────────
+function render() {
+  const c = document.getElementById('content');
+  if(view === 'projects') c.innerHTML = renderProjects();
+  else if(view === 'requests') c.innerHTML = renderRequests();
+  else if(view === 'dashboard') c.innerHTML = renderDashboard();
+}
+
+function renderProjects() {
+  let h = `<input class="search" placeholder="🔍  Search materials..." oninput="searchQ=this.value;render()" value="${esc(searchQ)}">`;
+  const projs = DB.projects;
+  if(!projs.length) return h + `<div class="empty"><div class="empty-ico">📁</div><div class="empty-txt">No projects yet.<br>Tap + to create your first project.</div></div>`;
+  projs.forEach(p => {
+    const mats = DB.materials.filter(m => m.projId === p.id && (!searchQ || m.name.toLowerCase().includes(searchQ.toLowerCase())));
+    if(searchQ && !mats.length) return;
+    const del = mats.filter(m=>m.status==='delivered').length;
+    const pend = mats.filter(m=>m.status==='pending').length;
+    const req = mats.filter(m=>m.status==='requested').length;
+    const pct = mats.length ? Math.round(del/mats.length*100) : 0;
+    const isOpen = openCards[p.id];
+    h += `<div class="card">
+      <div class="card-hdr" onclick="toggleCard(${p.id})">
+        <div class="pico" style="background:${p.color}22">${p.icon}</div>
+        <div class="pinfo">
+          <div class="pname">${esc(p.name)}</div>
+          <div class="pmeta">${esc(p.client)} · ${esc(p.site)}</div>
+        </div>
+        <div class="pright">
+          <div class="chips">
+            ${pend?`<div class="chip chip-w">${pend} pending</div>`:''}
+            ${req?`<div class="chip chip-b">${req} req</div>`:''}
+            ${del?`<div class="chip chip-g">${del} done</div>`:''}
+          </div>
+          <div class="pct">${pct}% complete</div>
+        </div>
+      </div>
+      <div class="pbar"><div class="pbar-fill" style="width:${pct}%;background:${p.color}"></div></div>
+      <div class="cbody ${isOpen?'open':''}">`;
+    if(!mats.length) {
+      h += `<div style="padding:12px 0;color:var(--t3);font-size:13px;text-align:center">No materials yet.</div>`;
+    } else {
+      mats.forEach(m => {
+        const ico = {delivered:'✓',pending:'⏳',requested:'→'}[m.status];
+        h += `<div class="mrow">
+          <div class="mstat ${m.status}" onclick="cycleStatus(${m.id})" title="Tap to cycle status">${ico}</div>
+          <div class="minfo">
+            <div class="mname">${esc(m.name)}</div>
+            <div class="mdetail">${esc(m.spec)} · ${m.date}</div>
+          </div>
+          <div class="mqty">${esc(m.qty)}</div>
+          <div class="mbtns">
+            ${m.status!=='requested'?`<button class="ibtn ibtn-r" onclick="setStatus(${m.id},'requested')" title="Request">📋</button>`:''}
+            ${m.status!=='delivered'?`<button class="ibtn ibtn-d" onclick="setStatus(${m.id},'delivered')" title="Mark Delivered">✓</button>`:''}
+            <button class="ibtn ibtn-x" onclick="delMaterial(${m.id})" title="Delete">✕</button>
+          </div>
+        </div>`;
+      });
+    }
+    h += `<button class="add-mat-btn" onclick="openAddMaterial(${p.id})">＋ Add Material</button>`;
+    h += `</div></div>`;
+  });
+  return h;
+}
+
+function renderRequests() {
+  let h = `<div class="fbadges">
+    ${['all','pending','requested','delivered'].map(s=>`<button class="fbadge ${filterStatus===s?'on':''}" onclick="filterStatus='${s}';render()">${s==='all'?'All':cap(s)}</button>`).join('')}
+  </div>`;
+  const all = DB.materials.filter(m => filterStatus==='all' || m.status===filterStatus);
+  if(!all.length) return h + `<div class="empty"><div class="empty-ico">📋</div><div class="empty-txt">No items found.</div></div>`;
+  const grouped = {};
+  all.forEach(m => {
+    const p = DB.projects.find(p=>p.id===m.projId);
+    const key = p ? p.id : 0;
+    if(!grouped[key]) grouped[key] = {proj:p, items:[]};
+    grouped[key].items.push(m);
+  });
+  Object.values(grouped).forEach(g => {
+    const p = g.proj;
+    h += `<div class="slbl">${p?p.icon:'📦'} ${p?esc(p.name):'Unknown Project'}</div>`;
+    g.items.forEach(m => {
+      const scol = {pending:'var(--warn)',requested:'var(--accent)',delivered:'var(--ok)'}[m.status];
+      const ico = {delivered:'✓',pending:'⏳',requested:'→'}[m.status];
+      h += `<div class="card" style="margin-bottom:8px">
+        <div class="card-hdr" style="cursor:default">
+          <div class="mstat ${m.status}" onclick="cycleStatus(${m.id})">${ico}</div>
+          <div class="minfo">
+            <div class="mname">${esc(m.name)}</div>
+            <div class="mdetail">${esc(m.qty)} · ${esc(m.spec)}</div>
+          </div>
+          <div style="font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;background:${scol}20;color:${scol};flex-shrink:0">${cap(m.status)}</div>
+        </div>
+      </div>`;
+    });
+  });
+  return h;
+}
+
+function renderDashboard() {
+  const total = DB.materials.length;
+  const del = DB.materials.filter(m=>m.status==='delivered').length;
+  const pend = DB.materials.filter(m=>m.status==='pending').length;
+  const req = DB.materials.filter(m=>m.status==='requested').length;
+  const pct = total ? Math.round(del/total*100) : 0;
+  let h = `<div class="slbl">Overview</div>
+  <div class="sgrid">
+    <div class="scard"><div class="sval" style="color:var(--accent)">${DB.projects.length}</div><div class="slbl2">Active Projects</div></div>
+    <div class="scard"><div class="sval" style="color:var(--t1)">${total}</div><div class="slbl2">Total Materials</div></div>
+    <div class="scard"><div class="sval" style="color:var(--ok)">${del}</div><div class="slbl2">Delivered</div></div>
+    <div class="scard"><div class="sval" style="color:var(--warn)">${pend}</div><div class="slbl2">Pending</div></div>
+  </div>
+  <div class="card" style="padding:14px;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:13px;color:var(--t2)">Overall Delivery Progress</span>
+      <span style="font-size:14px;font-weight:800;color:var(--ok)">${pct}%</span>
+    </div>
+    <div class="bigbar"><div class="bigbar-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--ok),var(--accent))"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:7px;font-size:11px;color:var(--t3)">
+      <span>✓ ${del} delivered</span><span>→ ${req} requested</span><span>⏳ ${pend} pending</span>
+    </div>
+  </div>
+  <div class="slbl">Per Project</div>`;
+  DB.projects.forEach(p => {
+    const mats = DB.materials.filter(m=>m.projId===p.id);
+    const pdel = mats.filter(m=>m.status==='delivered').length;
+    const ppct = mats.length ? Math.round(pdel/mats.length*100) : 0;
+    h += `<div class="card" style="padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+        <span style="font-size:20px">${p.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</div>
+          <div style="font-size:11px;color:var(--t3)">${esc(p.client)}</div>
+        </div>
+        <span style="font-size:13px;font-weight:800;color:${p.color}">${ppct}%</span>
+      </div>
+      <div class="pbar" style="border-radius:3px;height:5px"><div class="pbar-fill" style="width:${ppct}%;background:${p.color}"></div></div>
+      <div style="font-size:11px;color:var(--t3);margin-top:5px">${pdel} of ${mats.length} materials delivered</div>
+    </div>`;
+  });
+  if(DB.log.length) {
+    h += `<div class="slbl" style="margin-top:16px">Recent Activity</div>`;
+    DB.log.slice(0,10).forEach(l => {
+      h += `<div class="actrow"><div class="actdot" style="background:${l.color}"></div><div><div class="acttxt">${esc(l.text)}</div><div class="acttime">${l.time}</div></div></div>`;
+    });
+  }
+  return h;
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────
+function toggleCard(id) { openCards[id] = !openCards[id]; render(); }
+
+function cycleStatus(id) {
+  const m = DB.materials.find(m=>m.id===id); if(!m) return;
+  const next = {pending:'requested',requested:'delivered',delivered:'pending'};
+  addLog(m, next[m.status]);
+  m.status = next[m.status];
+  save(); render();
+  toast(cap(m.status) + ' ✓');
+}
+
+function setStatus(id, status) {
+  const m = DB.materials.find(m=>m.id===id); if(!m) return;
+  addLog(m, status);
+  m.status = status;
+  save(); render();
+  toast(cap(status) + ' ✓');
+}
+
+function delMaterial(id) {
+  const m = DB.materials.find(m=>m.id===id); if(!m) return;
+  if(!confirm(`Delete "${m.name}"?`)) return;
+  DB.materials = DB.materials.filter(m=>m.id!==id);
+  save(); render();
+  toast('Deleted');
+}
+
+function addLog(m, newStatus) {
+  const p = DB.projects.find(p=>p.id===m.projId);
+  const colors = {delivered:'#2ECC8A',requested:'#4F8EF7',pending:'#F0A429'};
+  const verbs = {delivered:'delivered to',requested:'requested for',pending:'set pending for'};
+  const now = new Date();
+  DB.log.unshift({ text:`${m.name} ${verbs[newStatus]} ${p?p.name:''}`, time: now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), color:colors[newStatus] });
+  if(DB.log.length > 30) DB.log.pop();
+}
+
+// ─── MODALS ───────────────────────────────────────────────────
+function fabClick() {
+  if(view==='projects') openAddProject();
+  else openAddMaterialGeneral();
+}
+
+function openDrawer(html) {
+  document.getElementById('drawerBody').innerHTML = html;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeDrawer() { document.getElementById('overlay').classList.remove('open'); }
+function closeBg(e) { if(e.target===document.getElementById('overlay')) closeDrawer(); }
+
+function openAddProject() {
+  openDrawer(`
+    <div class="mtitle">New Project</div>
+    <div class="fg"><div class="flbl">Project Name *</div><input class="finput" id="pName" placeholder="e.g. Residential Tower B" autofocus></div>
+    <div class="fg"><div class="flbl">Client / Owner</div><input class="finput" id="pClient" placeholder="Client name"></div>
+    <div class="fg"><div class="flbl">Site Location</div><input class="finput" id="pSite" placeholder="e.g. Dubai Marina"></div>
+    <div class="fg"><div class="flbl">Icon</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="iconPicker">
+        ${PROJ_ICONS.map((ic,i)=>`<div onclick="selectIcon(this,'${ic}')" style="width:40px;height:40px;border-radius:10px;border:2px solid ${i===0?'var(--accent)':'var(--bdr)'};display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;transition:border .2s" data-icon="${ic}">${ic}</div>`).join('')}
+      </div>
+    </div>
+    <button class="btn-ok" onclick="saveProject()">Create Project</button>
+  `);
+}
+
+let selectedIcon = PROJ_ICONS[0];
+function selectIcon(el, ic) {
+  selectedIcon = ic;
+  document.querySelectorAll('#iconPicker > div').forEach(d => d.style.borderColor = d.dataset.icon===ic?'var(--accent)':'var(--bdr)');
+}
+
+function saveProject() {
+  const name = val('pName'), client = val('pClient'), site = val('pSite');
+  if(!name) { alert('Project name is required.'); return; }
+  const i = DB.projects.length % PROJ_COLORS.length;
+  DB.projects.push({ id: Date.now(), name, client:client||'—', site:site||'—', icon:selectedIcon, color:PROJ_COLORS[i], created:Date.now() });
+  selectedIcon = PROJ_ICONS[0];
+  save(); closeDrawer(); render();
+  toast('Project created!');
+}
+
+function openAddMaterial(projId) {
+  openDrawer(`
+    <div class="mtitle">Add Material</div>
+    <div class="fg"><div class="flbl">Material Name *</div><input class="finput" id="mName" placeholder="e.g. Ready Mix Concrete C30" autofocus></div>
+    <div class="fg"><div class="flbl">Quantity</div><input class="finput" id="mQty" placeholder="e.g. 50 m³, 10 tonnes"></div>
+    <div class="fg"><div class="flbl">Specification / Grade</div><input class="finput" id="mSpec" placeholder="e.g. C35, Grade 60, 200mm"></div>
+    <div class="fg"><div class="flbl">Delivery Date</div><input class="finput" id="mDate" type="date" value="${today()}"></div>
+    <div class="fg"><div class="flbl">Status</div>
+      <select class="finput" id="mStatus">
+        <option value="pending">⏳ Pending</option>
+        <option value="requested">→ Requested</option>
+        <option value="delivered">✓ Delivered</option>
+      </select>
+    </div>
+    <button class="btn-ok" onclick="saveMaterial(${projId})">Add Material</button>
+  `);
+}
+
+function openAddMaterialGeneral() {
+  if(!DB.projects.length) { openAddProject(); return; }
+  const opts = DB.projects.map(p=>`<option value="${p.id}">${p.icon} ${p.name}</option>`).join('');
+  openDrawer(`
+    <div class="mtitle">Add Material</div>
+    <div class="fg"><div class="flbl">Project *</div><select class="finput" id="mProj">${opts}</select></div>
+    <div class="fg"><div class="flbl">Material Name *</div><input class="finput" id="mName" placeholder="e.g. Steel Rebar 12mm" autofocus></div>
+    <div class="fg"><div class="flbl">Quantity</div><input class="finput" id="mQty" placeholder="e.g. 5 tonnes"></div>
+    <div class="fg"><div class="flbl">Specification / Grade</div><input class="finput" id="mSpec" placeholder="e.g. Grade 60, 200mm"></div>
+    <div class="fg"><div class="flbl">Delivery Date</div><input class="finput" id="mDate" type="date" value="${today()}"></div>
+    <div class="fg"><div class="flbl">Status</div>
+      <select class="finput" id="mStatus">
+        <option value="pending">⏳ Pending</option>
+        <option value="requested">→ Requested</option>
+        <option value="delivered">✓ Delivered</option>
+      </select>
+    </div>
+    <button class="btn-ok" onclick="saveMaterial(document.getElementById('mProj').value)">Add Material</button>
+  `);
+}
+
+function saveMaterial(projId) {
+  const name = val('mName'), qty = val('mQty'), spec = val('mSpec'), date = val('mDate'), status = val('mStatus');
+  if(!name) { alert('Material name is required.'); return; }
+  const m = { id:Date.now(), projId:parseInt(projId), name, qty:qty||'—', spec:spec||'—', date:date||today(), status, note:'' };
+  DB.materials.push(m);
+  addLog(m, status);
+  openCards[parseInt(projId)] = true;
+  save(); closeDrawer(); render();
+  toast('Material added!');
+}
+
+function openSettings() {
+  openDrawer(`
+    <div class="mtitle">Settings</div>
+    <div class="card" style="padding:14px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">📱 App Info</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.7">MaterialFlow v1.0<br>All data stored locally — no account or internet needed.</div>
+    </div>
+    <div class="card" style="padding:14px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">📊 Data Summary</div>
+      <div style="font-size:12px;color:var(--t2)">${DB.projects.length} projects · ${DB.materials.length} materials · ${DB.log.length} activity logs</div>
+    </div>
+    <div class="card" style="padding:14px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">📤 Export Data</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:10px">Download all your data as JSON backup.</div>
+      <button class="btn-ok" style="margin-top:0" onclick="exportData()">Export JSON</button>
+    </div>
+    <div class="card" style="padding:14px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--danger)">⚠️ Danger Zone</div>
+      <button class="btn-ok btn-danger" style="margin-top:0" onclick="clearAll()">Clear All Data</button>
+    </div>
+  `);
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'materialflow-backup.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported!');
+}
+
+function clearAll() {
+  if(!confirm('Delete ALL projects and materials? This cannot be undone.')) return;
+  DB = {projects:[], materials:[], log:[]};
+  save(); closeDrawer(); render();
+  toast('All data cleared');
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }
+function today() { return new Date().toISOString().slice(0,10); }
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ─── SERVICE WORKER ───────────────────────────────────────────
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+load();
+render();
+
+// Install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  setTimeout(() => {
+    if(deferredPrompt) toast('📲 Tip: Add to Home Screen for app experience');
+  }, 3000);
+});
+</script>
+</body>
+</html>
